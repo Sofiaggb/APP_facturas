@@ -1,3 +1,5 @@
+# python -m venv SistemaFacturacion    (crear un entorno virtual)
+# deactivate    (desactivar el entorno virtual)
 import mysql.connector
 
 class connection_bd:

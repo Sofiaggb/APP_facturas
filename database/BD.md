@@ -1,6 +1,12 @@
 # Base de Datos
 
 ## Tablas
+**Usuarios (ED)**
+- ID_user **(PK)**
+- ID fact **(FK)**
+- nombre_user
+- contraseña_user
+
 **Facturas (ED)**
 - id_fact **(PK)**
 - fecha_emision
@@ -8,6 +14,7 @@
 - id_cliente_proveedor **(FK)**
 - tipo
 - descripcion 
+- monto
 - imagen
 
 **Articulos_por_factura (EP)**
@@ -26,6 +33,11 @@
 **Productos (ED)**
 - id_producto **(PK)**
 - descripcion
+- precio
+
+**Servicios_e_impuestos (ED)**
+- ID_serv_impto **(PK)**
+- nombre
 - precio
 
 

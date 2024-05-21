@@ -1,7 +1,7 @@
 from tkinter import *
 from controllers.facturas_controller import get_factures, delete, get_fact, create, update
 from views.facts_table import facts_table
-from views.form_fact import form_fact
+from views.form_fact1 import form_fact
 
 def utils_table(marco):
 

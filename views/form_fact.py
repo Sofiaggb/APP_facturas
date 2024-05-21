@@ -2,26 +2,33 @@ import customtkinter as ctk
 from  tkinter import *
 from  tkinter import ttk
 from tkcalendar import DateEntry
+# import sys
+# import os
+# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from controllers.facturas_controller import create
-
+# import controllers.facturas_controller as c
 ctk.set_appearance_mode("dark")  # Modes: system (default), light, dark
 ctk.set_default_color_theme("blue")  # Themes: blue (default), dark-blue, green
 
-class f2:
-    def __init__(self):
-
-        self.app = ctk.CTk()  # create CTk window like you do with the Tk window
+class form(ctk.CTkToplevel):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.app = self
+        # self.app = ctk.CTkToplevel(master) # create CTk window like you do with the Tk window
         self.app.title("Crear Factura")
-        self.app.geometry("1000x600") #tamaño de la ventana
+        self.app.geometry("1030x600+150+50") #tamaño de la ventana
         self.app.resizable(False, False) # bloqueo de redimencion de la ventana, alto y ancho
-        
+       
         # secciones
         # desplazamiento de pantalla
-        self.scroll = ctk.CTkScrollableFrame(master=self.app,  fg_color="#212121", orientation="vertical", width=1000, height=600)
+        self.scroll = ctk.CTkScrollableFrame(master=self.app,  fg_color="#212121", orientation="vertical", width=1030, height=600)
         self.scroll.pack(expand = True)
         # facturas
         self.invoice= ctk.CTkFrame(master=self.scroll)
         self.invoice.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="nsw")
+           # montos
+        # self.montos= ctk.CTkFrame(master=self.invoice, fg_color="transparent")
+        # self.montos.grid(row=4, column=0, padx=10, pady=(10, 0), sticky="nsw", columnspan=2)
         # cliente proveedor
         self.client= ctk.CTkFrame(master=self.scroll)
         self.client.grid(row=0, column=1, padx=10, pady=(10, 0), sticky="nsw")
@@ -50,13 +57,11 @@ class f2:
                 }
             }    
 
-
         # facturas
-        # self.fecha_emision_fact= StringVar()
         self.nro_fact= StringVar()
         self.data_tipo_fact=["Servicios Públicos", "Compras", "Ventas", "Impuestos"]
         self.tipo_fact= StringVar(value="")
-        self.monto_fact= StringVar()
+        self.iva_fact= StringVar()
         self.imagen_fact= StringVar()
 
 
@@ -69,15 +74,15 @@ class f2:
         self.lab_nro=ctk.CTkLabel(master= self.invoice, text="Tipo de Factura")
         self.lab_nro.grid(row=1, column=0, padx=30,pady=(10, 0) , sticky="w")
         self.combobox_fact = ctk.CTkComboBox(master= self.invoice, command=self.selection_tipo_fact, values=self.data_tipo_fact, variable=self.tipo_fact, width=150)
-        self.combobox_fact.grid(row=2, column=0, padx=30,  pady=(0, 10),sticky="w")
+        self.combobox_fact.grid(row=2, column=0, padx=(30,0),  pady=(0, 10),sticky="w")
 
         self.lab_tipo=ctk.CTkLabel(master= self.invoice, text="Nro de la Factura")
-        self.lab_tipo.grid(row=1, column=1, padx=30, pady=(10, 0) , sticky="w")
+        self.lab_tipo.grid(row=1, column=1, padx=(20, 0), pady=(10, 0) , sticky="w")
         self.inp_tipo= ctk.CTkEntry(master= self.invoice, textvariable=self.nro_fact, width=200)
-        self.inp_tipo.grid(row=2, column=1, padx=30, pady=(0, 10) , sticky="w")
+        self.inp_tipo.grid(row=2, column=1, padx=20, pady=(0, 10) , sticky="w")
                 
         self.lab_date=ctk.CTkLabel(master= self.invoice, text="Fecha")
-        self.lab_date.grid(row=3, column=0, padx=30,pady=(10, 0) , sticky="w")
+        self.lab_date.grid(row=3, column=0, padx=(30,0),pady=(10, 0) , sticky="w")
 
         # Crear un estilo personalizado para el DateEntry
         self.style = ttk.Style()
@@ -90,13 +95,14 @@ class f2:
                 bordercolor='#343434',
                 hoverbackground='blue')
         self.date_entry = DateEntry(master= self.invoice, width=20,date_pattern='dd/MM/yyyy',style='my.DateEntry', selected_fg='darkblue')
-        self.date_entry.grid(row=4, column=0, padx=0, pady=(0, 20))
+        self.date_entry.grid(row=4, column=0, padx=(20, 10), pady=(0, 20))
 
         
-        self.lab_monto=ctk.CTkLabel(master= self.invoice, text="Monto")
-        self.lab_monto.grid(row=3, column=1, padx=30,pady=(10, 0) , sticky="w")
-        self.inp_monto= ctk.CTkEntry(master= self.invoice, textvariable=self.monto_fact, width=200)
-        self.inp_monto.grid(row=4, column=1, padx=(30, 0), pady=(0, 20) , sticky="w")
+        self.lab_iva=ctk.CTkLabel(master= self.invoice, text="Monto del IVA")
+        self.lab_iva.grid(row=3, column=1, padx=20,pady=(10, 0) , sticky="w")
+        self.inp_iva= ctk.CTkEntry(master= self.invoice, textvariable=self.iva_fact, width=130)
+        self.inp_iva.grid(row=4, column=1, padx=20, pady=(0, 20) , sticky="w")
+
 
         self.lab_direccion=ctk.CTkLabel(master= self.invoice, text="Descripcion o Motivo")
         self.lab_direccion.grid(row=5, column=0, padx=30, sticky="w")
@@ -139,15 +145,16 @@ class f2:
                                             height=40,
                                             text="Guardar", 
                                             font=("Arial",16),
-                                            # command=lambda: print(self.vars.keys()))
+                                            # command=lambda: print(self.date_entry.get_date()))
                                             command=lambda: create(self.app, self.nom_cli_pvd,
                                             self.rif_cli_pvd, self.inp_direccion_cli,
                                             self.telf_cli_pvd, self.date_entry, self.nro_fact, 
-                                            self.tipo_fact, self.inp_direccion_fact,
+                                            self.tipo_fact,  self.iva_fact, self.inp_direccion_fact,
                                             self.vars, self.contain_widgets
                                             ))
         self.handlebutton.grid(row=2, column=0, padx=10, pady=10,  columnspan=2)
-        self.app.mainloop()
+        self.grab_set()
+        # self.app.mainloop()
         
         # seccion producto
     def frame_products(self, *args):
@@ -272,10 +279,14 @@ class f2:
             self.lab_precio_pdt.configure(text="Monto")
             self.lab_cant_pdt.configure(text="Mes(es)")
             self.add_button.configure(state=ctk.DISABLED, fg_color="#424242")
+            # Deshabilitar el campo de entrada
+            self.inp_iva.configure(state=ctk.DISABLED)
+            # Establecer un valor por defecto, por ejemplo '0.00'
+            self.iva_fact.set('0.00')
 
             # Borrar las filas excepto la primera
             for num in list(self.contain_widgets.keys()):
-                if num != "1":  # No borrar la primera fila
+                if num != 1:  # No borrar la primera fila
                     for widget in self.contain_widgets[num].values():
                         widget.destroy()
                     del self.contain_widgets[num]
@@ -292,11 +303,16 @@ class f2:
             self.lab_precio_pdt.configure(text="Precio c/u")
             self.lab_cant_pdt.configure(text="Cantidad")
             self.add_button.configure(state=ctk.NORMAL, fg_color="#0277BD")
-
+            # habilitar el campo de entrada
+            self.inp_iva.configure(state=ctk.NORMAL)
+            self.iva_fact.set('')
 
     def clear_widgets(self):
         print(list(self.contain_widgets.keys()))
         print(list(self.vars.keys()))
 
 
-f2()
+# form()
+# Inicializar la clase form cuando se presiona el botón
+# def forma():
+#     form_instance = form()

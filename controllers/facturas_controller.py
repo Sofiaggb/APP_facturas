@@ -2,12 +2,12 @@ from tkinter import END
 from datetime import date
 from connection import connection_bd # database
 from views.messages import  VentanaMensaje # mensages
-from controllers.auth_invoice import validar_rif, validar_telefono, validar_fecha, num_positivo
-
+from controllers.auth_invoice import valilidar_formulario
 db = connection_bd()
 
 def clear(nombre_cli_pvd, rif_cli_pvd, direccion_cli_pvd, telefono_cli_pvd, 
-           fecha_emision, nro_fact, tipo_fact, iva_fact, descripcion_fact, vars, widgets):
+           fecha_emision, nro_fact, tipo_fact, iva_fact, descripcion_fact, vars, widgets,
+           monto_neto, monto_total):
     # limpiar todos los campos
     nombre_cli_pvd.set("")
     rif_cli_pvd.set("")
@@ -16,8 +16,11 @@ def clear(nombre_cli_pvd, rif_cli_pvd, direccion_cli_pvd, telefono_cli_pvd,
     fecha_emision.set_date(date.today())
     nro_fact.set("")
     tipo_fact.set("")
-    iva_fact.set("")
     descripcion_fact.delete("0.0", "end")  
+    # montos
+    iva_fact.set("")
+    monto_neto.set(0)
+    monto_total.set(0)
 
      # Borrar todos los widgets y variables excepto los de la primera fila
     for num in list(vars.keys()):
@@ -31,220 +34,392 @@ def clear(nombre_cli_pvd, rif_cli_pvd, direccion_cli_pvd, telefono_cli_pvd,
                 var.set("")  # Dejar los valores en blanco
 
 
-def get_fact(tabla, marco, descripcion_pdt, precio_pdt):
-    # print(tabla.selection()) 
-    if tabla.selection():
-        id= tabla.selection()[0]
-        sql = "SELECT * FROM productos WHERE ID_pdt = %s"
-        db.cursor.execute(sql, (id,))
-        registro = db.cursor.fetchone()
-        descripcion_pdt.set(registro[1])
-        precio_pdt.set(registro[2])
+def get_factura(id, tipo):
+        
+        if tipo =="Ventas" or tipo == "Compras":
 
-        print(registro)
-        # return registro
-    else:
-        # descripcion_pdt.set("sin valor")
-        print("sin valor")
+            sql = """SELECT f.fecha_emision_fact, f.nro_fact,f.tipo_fact, f.descripción_fact, cp.nombre_cli_pvd, cp.rif_cli_pvd, cp.dirección_cli_pvd, cp.telefono_cli_pvd, 
+                        p.descripción_pdt, p.precio_pdt, p.cantidad_pdt, f.monto_neto, f.IVA, f.monto_total, f.ID_fact, f.ID_cli_pvd, apf.ID_pdt
+                    FROM facturas f
+                    JOIN clientes_proveedores cp ON f.ID_cli_pvd = cp.ID_cli_pvd
+                    JOIN articulos_por_factura apf ON f.ID_fact = apf.ID_fact
+                    JOIN productos p ON apf.ID_pdt = p.ID_pdt
+                    WHERE f.ID_fact =%s"""
+            db.cursor.execute(sql, (id,))
+            results = db.cursor.fetchall()
+               # Crear un diccionario para la información de la factura
+            factura_info = {
+                "ID":None,
+                "id_cp":None,
+                "fecha_emision_fact": None,
+                "nro_fact": None,
+                "tipo_fact": None,
+                "descripción_fact": None,
+                "cliente": {
+                    "nombre": None,
+                    "rif": None,
+                    "dirección": None,
+                    "teléfono": None
+                },
+                "productos": [],
+                "monto_neto": None,
+                "IVA": None,
+                "monto_total": None
+            }
+
+            if results:
+                # Rellenar la información de la factura
+                first_row = results[0]
+                factura_info["fecha_emision_fact"] = first_row[0]
+                factura_info["nro_fact"] = first_row[1]
+                factura_info["tipo_fact"] = first_row[2]
+                factura_info["descripción_fact"] = first_row[3]
+                factura_info["cliente"]["nombre"] = first_row[4]
+                factura_info["cliente"]["rif"] = first_row[5]
+                factura_info["cliente"]["dirección"] = first_row[6]
+                factura_info["cliente"]["teléfono"] = first_row[7]
+                factura_info["monto_neto"] = first_row[11]
+                factura_info["IVA"] = first_row[12]
+                factura_info["monto_total"] = first_row[13]
+                factura_info["ID"] = first_row[14]
+                factura_info["id_cp"] = first_row[15]
+
+                # Rellenar la información de los productos
+                for fila in results:
+                    producto = {
+                        "ID_pdt":fila[16],
+                        "descripción_pdt": fila[8],
+                        "precio_pdt": fila[9],
+                        "cantidad_pdt": fila[10]
+                    }
+                    factura_info["productos"].append(producto)
+
+            return factura_info
+        
+        elif tipo == "Servicios Públicos" or tipo == "Impuestos":
+            sql = """SELECT f.fecha_emision_fact, f.nro_fact, f.tipo_fact, f.descripción_fact, cp.nombre_cli_pvd, cp.rif_cli_pvd, cp.dirección_cli_pvd, cp.telefono_cli_pvd, 
+                            si.descripcion_serv_impto, si.monto_serv_impto, si.meses_serv_impto, f.monto_neto, f.IVA, f.monto_total, f.ID_fact, f.ID_cli_pvd, si.ID_serv_impto
+                    FROM facturas f
+                    JOIN clientes_proveedores cp ON f.ID_cli_pvd = cp.ID_cli_pvd
+                    JOIN detalles_factura df ON f.ID_fact = df.ID_fact
+                    JOIN servicios_e_impuestos si ON df.ID_serv_impto = si.ID_serv_impto
+                    WHERE f.ID_fact = %s"""
+            db.cursor.execute(sql, (id,))
+            results = db.cursor.fetchall()
+            
+            # Crear un diccionario para la información de la factura
+            factura_info = {
+                "ID":None,
+                "id_cp":None,
+                "ID_serv_impto": None,
+                "fecha_emision_fact": None,
+                "nro_fact": None,
+                "tipo_fact": None,
+                "descripción_fact": None,
+                "cliente": {
+                    "nombre": None,
+                    "rif": None,
+                    "dirección": None,
+                    "teléfono": None
+                },
+                "servicios_impuestos": [],
+                "monto_neto": None,
+                "IVA": None,
+                "monto_total": None
+            }
+
+            if results:
+                # Rellenar la información de la factura
+                first_row = results[0]
+                factura_info["fecha_emision_fact"] = first_row[0]
+                factura_info["nro_fact"] = first_row[1]
+                factura_info["tipo_fact"] = first_row[2]
+                factura_info["descripción_fact"] = first_row[3]
+                factura_info["cliente"]["nombre"] = first_row[4]
+                factura_info["cliente"]["rif"] = first_row[5]
+                factura_info["cliente"]["dirección"] = first_row[6]
+                factura_info["cliente"]["teléfono"] = first_row[7]
+                factura_info["monto_neto"] = first_row[11]
+                factura_info["IVA"] = first_row[12]
+                factura_info["monto_total"] = first_row[13]
+                factura_info["ID"] = first_row[14]
+                factura_info["id_cp"] = first_row[15]
+                factura_info["ID_serv_impto"] = first_row[16]
+
+
+                # Rellenar la información de los servicios o impuestos
+                for fila in results:
+                    servicio_impuesto = {
+                        "descripcion_serv_impto": fila[8],
+                        "monto_serv_impto": fila[9],
+                        "meses_serv_impto": fila[10],
+                    }
+                    factura_info["servicios_impuestos"].append(servicio_impuesto)
+
+            return factura_info
+        else:
+            print("Tipo de factura no reconocido.")
+            return None
+
 
     
 
-def get_factures(tabla):
-    # vaciar tabla
-    tabla.delete(*tabla.get_children())
-    # seleccionar los elemtos y devolverlos
-    sql="select * from productos"
-    db.cursor.execute(sql)
-    filas= db.cursor.fetchall()
-    for fila in filas:
-        id= fila[0]
-        tabla.insert("", END, id, text=id, values=fila)
+def get_facturas(app):
+    try:
+        # seleccionar los elemtos y devolverlos
+        sql="""SELECT ID_fact,fecha_emision_fact, nro_fact,tipo_fact, descripción_fact 
+                FROM facturas
+                ORDER BY ID_fact DESC;"""
+        db.cursor.execute(sql)
+        filas= db.cursor.fetchall()
 
+        facturas_data = []
+        for fila in filas:
+            facturas_data.append({
+                "id": fila[0],
+                "fecha": fila[1],
+                "nro": fila[2],
+                "tipo": fila[3],
+                "descripcion": fila[4]
+            })
+        
+        return facturas_data
+    
+    except Exception as err:
+        VentanaMensaje(app, "Error", "Lo sentimos, Ocurrió un error al devolver las facturas. ¡Inténtalo más tarde!")
+        print(err)
 
 def create(app, nombre_cli_pvd, rif_cli_pvd, direccion_cli_pvd, telefono_cli_pvd, 
-           fecha_emision, nro_fact, tipo_fact, iva_fact, descripcion_fact, vars, widgets):
+           fecha_emision, nro_fact, tipo_fact, iva_fact, descripcion_fact, vars, widgets,
+           monto_neto, monto_total):
+    
     try:
         # validaciones 
-        if not tipo_fact.get().strip():
-           return VentanaMensaje(app, "Error", "El tipo de la factura es obligatorio.")
-       
-        if not nro_fact.get().strip():
-           return VentanaMensaje(app, "Error", "El número de la factura es obligatorio.")
-
-        if not validar_fecha(fecha_emision.get_date()):
-            return VentanaMensaje(app, "Error", "La fecha es invalida.  Verifica que la fecha no sea futura o no tenga más de 15 años de antigüedad")
-
-        if not iva_fact.get().strip():
-           return VentanaMensaje(app, "Error", "El IVA de la factura es obligatorio.")
-
-        if tipo_fact.get()== "Compras" or tipo_fact.get()=="Ventas":
-            if not num_positivo(iva_fact.get()):
-                return VentanaMensaje(app, "Error", "El monto del IVA debe ser un valor positivo. Por favor, ingresa un valor válido.")
-
-        if not descripcion_fact.get("0.0", "end").strip():
-           return VentanaMensaje(app, "Error", "La descripción de la factura es obligatoria.")
+        validar=valilidar_formulario(app, nombre_cli_pvd, rif_cli_pvd, direccion_cli_pvd, telefono_cli_pvd, 
+        fecha_emision, nro_fact, tipo_fact, iva_fact, descripcion_fact, vars, VentanaMensaje)
         
-        if not rif_cli_pvd.get().strip():
-           return VentanaMensaje(app, "Error", "El RIF del cliente/proveedor es obligatorio.")
-        
-        if not validar_rif(rif_cli_pvd.get()):
-             return VentanaMensaje(app, "Error", "El RIF del cliente/proveedor es inválido, El formato es una letra (V, E, J, G), seguida de una linea (-) y 8 o 9 dígitos.")
-        
-        if not nombre_cli_pvd.get().strip():
-           return VentanaMensaje(app, "Error", "El nombre del cliente/proveedor es obligatorio.")
-        
-        if not telefono_cli_pvd.get().strip():
-           return VentanaMensaje(app, "Error", "El teléfono del cliente/proveedor es obligatorio.")
+        if not validar:
 
-        if not validar_telefono(telefono_cli_pvd.get()):
-            return VentanaMensaje(app, "Error", "El teléfono del cliente/proveedor es inválido.")
-
-        if not direccion_cli_pvd.get("0.0", "end").strip():
-           return VentanaMensaje(app, "Error", "La dirección del cliente/proveedor es obligatorio.")
-        
-        if tipo_fact.get()== "Servicios Públicos" or tipo_fact.get()=="Impuestos":
-            if not vars[1]["descripcion"].get() or not vars[1]["precio"].get() or not vars[1]["cantidad"].get() :
-                return VentanaMensaje(app, "Error", f"Por favor llene todos los campos del {tipo_fact.get()} a guardar")
-        
-            if not num_positivo(vars[1]["precio"].get()):
-                return VentanaMensaje(app, "Error", "El monto debe ser un valor positivo. Por favor, ingresa un valor válido.")
-        
-        else:
-            for key, item in vars.items():
-                if not item["descripcion"].get() or not item["precio"].get() or not item["cantidad"].get() :
-                    return VentanaMensaje(app, "Error", "Por favor llene todos los campos de los producto(s) a guardar o elimina las filas que se encuentren vacias")
-
-                if not num_positivo(item["precio"].get()) or not num_positivo(item["cantidad"].get()):
-                     return VentanaMensaje(app, "Error", "El precio y la cantidad debe ser un número positivo. Por favor, ingresa un valor válido.")
-
-
-        # Insertar cliente/proveedor
-        val_cli= nombre_cli_pvd.get(), rif_cli_pvd.get(), direccion_cli_pvd.get("0.0", "end"), telefono_cli_pvd.get()
-        sql_cli="""
-            INSERT INTO clientes_proveedores (nombre_cli_pvd, rif_cli_pvd, dirección_cli_pvd, telefono_cli_pvd)
-            VALUES (%s, %s, %s, %s)
-        """
-        db.cursor.execute(sql_cli, val_cli)
-
-        # Obtener el ID del cliente/proveedor recién insertado
-        ID_cli_pvd = db.cursor.lastrowid
-
-        # Insertar factura
-        iva_val = float(iva_fact.get())
-        if tipo_fact.get() == "Servicios Públicos" or tipo_fact.get() == "Impuestos":
-            monto_neto_val=float(vars[1]["precio"].get())
-        else:
-            monto_neto_val = sum(float(vars[i]["precio"].get()) * float(vars[i]["cantidad"].get())
-                                  for i in list(vars.keys()))
-
-
-        # Calcular el monto total
-        monto_total_val = monto_neto_val + iva_val
-
-        val_fact= fecha_emision.get_date(), nro_fact.get(), ID_cli_pvd, tipo_fact.get(), descripcion_fact.get("0.0", "end").strip(), monto_neto_val, iva_fact.get(), monto_total_val
-        sql_fact= """
-            INSERT INTO facturas (fecha_emision_fact, nro_fact, ID_cli_pvd, tipo_fact, descripción_fact, monto_neto, IVA, monto_total)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-        """
-        db.cursor.execute(sql_fact, val_fact)
-        
-        # Obtener el ID de la factura recién insertada
-        ID_fact = db.cursor.lastrowid
-
-        if tipo_fact.get() == "Servicios Públicos" or tipo_fact.get() == "Impuestos":
-            # Insertar servicio o impuesto
-            val_impto_serv= vars[1]["descripcion"].get(), vars[1]["precio"].get(), vars[1]["cantidad"].get()
-            sql_impto_serv="""
-                INSERT INTO servicios_e_impuestos (descripcion_serv_impto, monto_serv_impto, meses_serv_impto)
-                VALUES (%s, %s, %s)
+            # Insertar cliente/proveedor
+            val_cli= nombre_cli_pvd.get(), rif_cli_pvd.get(), direccion_cli_pvd.get("0.0", "end"), telefono_cli_pvd.get()
+            sql_cli="""
+                INSERT INTO clientes_proveedores (nombre_cli_pvd, rif_cli_pvd, dirección_cli_pvd, telefono_cli_pvd)
+                VALUES (%s, %s, %s, %s)
             """
-            db.cursor.execute(sql_impto_serv, val_impto_serv)
+            db.cursor.execute(sql_cli, val_cli)
+
+            # Obtener el ID del cliente/proveedor recién insertado
+            ID_cli_pvd = db.cursor.lastrowid
+
+            # Insertar factura
+
+            val_fact= fecha_emision.get_date(), nro_fact.get(), ID_cli_pvd, tipo_fact.get(), descripcion_fact.get("0.0", "end").strip(), monto_neto.get(), iva_fact.get(), monto_total.get()
+            sql_fact= """
+                INSERT INTO facturas (fecha_emision_fact, nro_fact, ID_cli_pvd, tipo_fact, descripción_fact, monto_neto, IVA, monto_total)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """
+            db.cursor.execute(sql_fact, val_fact)
             
-            # Obtener el ID del servicio o impuesto recién insertado
-            ID_serv_impto = db.cursor.lastrowid
-            
-            # Insertar detalles de la factura
-            db.cursor.execute("""
-                INSERT INTO detalles_factura (ID_fact, ID_serv_impto)
-                VALUES (%s, %s)
-            """, (ID_fact, ID_serv_impto))
-            
-            # Confirmar las inserciones
-            db.connection.commit()
-        else:
-            for key, producto in vars.items():
-                # Insertar producto
-                val_pdt= producto["descripcion"].get(), producto["precio"].get(), producto["cantidad"].get()
-                
-                sql_pdt="""
-                    INSERT INTO productos (descripción_pdt, precio_pdt, cantidad_pdt)
+            # Obtener el ID de la factura recién insertada
+            ID_fact = db.cursor.lastrowid
+
+            if tipo_fact.get() == "Servicios Públicos" or tipo_fact.get() == "Impuestos":
+                # Insertar servicio o impuesto
+                val_impto_serv= vars[1]["descripcion"].get(), vars[1]["precio"].get(), vars[1]["cantidad"].get()
+                sql_impto_serv="""
+                    INSERT INTO servicios_e_impuestos (descripcion_serv_impto, monto_serv_impto, meses_serv_impto)
                     VALUES (%s, %s, %s)
                 """
-                db.cursor.execute(sql_pdt, val_pdt)
+                db.cursor.execute(sql_impto_serv, val_impto_serv)
                 
                 # Obtener el ID del servicio o impuesto recién insertado
-                ID_pdt = db.cursor.lastrowid
+                ID_serv_impto = db.cursor.lastrowid
                 
                 # Insertar detalles de la factura
                 db.cursor.execute("""
-                    INSERT INTO articulos_por_factura (ID_fact, ID_pdt)
+                    INSERT INTO detalles_factura (ID_fact, ID_serv_impto)
                     VALUES (%s, %s)
-                """, (ID_fact, ID_pdt))
-            
-            # Confirmar las inserciones
-            db.connection.commit()
+                """, (ID_fact, ID_serv_impto))
+                
+                # Confirmar las inserciones
+                db.connection.commit()
+            else:
+                for key, producto in vars.items():
+                    # Insertar producto
+                    val_pdt= producto["descripcion"].get(), producto["precio"].get(), producto["cantidad"].get()
+                    
+                    sql_pdt="""
+                        INSERT INTO productos (descripción_pdt, precio_pdt, cantidad_pdt)
+                        VALUES (%s, %s, %s)
+                    """
+                    db.cursor.execute(sql_pdt, val_pdt)
+                    
+                    # Obtener el ID del servicio o impuesto recién insertado
+                    ID_pdt = db.cursor.lastrowid
+                    
+                    # Insertar detalles de la factura
+                    db.cursor.execute("""
+                        INSERT INTO articulos_por_factura (ID_fact, ID_pdt)
+                        VALUES (%s, %s)
+                    """, (ID_fact, ID_pdt))
+                
+                # Confirmar las inserciones
+                db.connection.commit()
 
-        VentanaMensaje(app, "Confirmación de Guardado", "¡Éxito! Tu factura ha sido guardada correctamente.")
+            VentanaMensaje(app, "Confirmación de Guardado", "¡Éxito! Tu factura ha sido guardada correctamente.")
+
+            clear(nombre_cli_pvd, rif_cli_pvd, direccion_cli_pvd, telefono_cli_pvd, 
+            fecha_emision, nro_fact, tipo_fact, iva_fact, descripcion_fact, vars, widgets,
+            monto_neto, monto_total)
         
-        clear(nombre_cli_pvd, rif_cli_pvd, direccion_cli_pvd, telefono_cli_pvd, 
-           fecha_emision, nro_fact, tipo_fact, iva_fact, descripcion_fact, vars, widgets)
 
     except Exception as err:
         VentanaMensaje(app, "Error", "Lo sentimos, Ocurrió un error. ¡Inténtalo más tarde!")
         print(err)
 
+
+
+def update(app, ID_fact, ID_cp, ID_imp_pdt, nombre_cli_pvd, rif_cli_pvd, direccion_cli_pvd, telefono_cli_pvd, 
+           fecha_emision, nro_fact, tipo_fact, iva_fact, descripcion_fact, vars, widgets,
+           monto_neto, monto_total):
+    
+    try:
+        validar=valilidar_formulario(app, nombre_cli_pvd, rif_cli_pvd, direccion_cli_pvd, telefono_cli_pvd, 
+        fecha_emision, nro_fact, tipo_fact, iva_fact, descripcion_fact, vars, VentanaMensaje)
         
-        # si no se cumple se agrga el registro
-    # val= descripcion_pdt.get(), precio_pdt.get()
-    # sql="insert INTO productos (pdt_descripcion, pdt_precio) values(%s, %s)"
-    # db.cursor.execute(sql, val)
-    # db.connection.commit()
-    # messaje(marco, "se ha guardado el registro correctamente", "green")
-    # get_factures(tabla)
-    # clear(descripcion_pdt, precio_pdt)
+        if not validar:
+             # Insertar cliente/proveedor
+            #  cliente
+            val_cli= nombre_cli_pvd.get(), rif_cli_pvd.get(), direccion_cli_pvd.get("0.0", "end"), telefono_cli_pvd.get(), ID_cp
+            sql_cli="""
+                 UPDATE clientes_proveedores
+                    SET nombre_cli_pvd = %s, rif_cli_pvd = %s, dirección_cli_pvd = %s, 
+                    telefono_cli_pvd = %s
+                    WHERE ID_cli_pvd = %s
+                            """
+            db.cursor.execute(sql_cli, val_cli)
 
-def update(tabla, marco,  descripcion_pdt, precio_pdt):
-        # formulario de modificar factura
-    update= False
-    if update==False:
-        # Obtener los valores de los campos
-        descripcion = descripcion_pdt.get()
-        precio = precio_pdt.get()
+            # factura
+            val_fact = fecha_emision.get_date(), nro_fact.get(), tipo_fact.get(), descripcion_fact.get("0.0", "end").strip(), monto_neto.get(), iva_fact.get(), monto_total.get(), ID_fact
+            sql_fact = """
+                UPDATE facturas
+                SET fecha_emision_fact = %s, nro_fact = %s, tipo_fact = %s, descripción_fact = %s, monto_neto = %s, IVA = %s, monto_total = %s
+                WHERE ID_fact = %s
+            """
+            db.cursor.execute(sql_fact, val_fact)
 
-        # Verificar si ambos campos tienen valores
-        # if not (descripcion and precio):
-        #     messaje(marco, "Por favor, completa todos los campos", "red")
-        #     return
+            # impuestos y servicios
+            if tipo_fact.get() in ["Servicios Públicos", "Impuestos"]:
+                val_impto_serv = vars[1]["descripcion"].get(), vars[1]["precio"].get(), vars[1]["cantidad"].get(), ID_imp_pdt
+                sql_impto_serv = """
+                    UPDATE servicios_e_impuestos
+                    SET descripcion_serv_impto = %s, monto_serv_impto = %s, meses_serv_impto = %s
+                    WHERE ID_serv_impto = %s
+                """
+                db.cursor.execute(sql_impto_serv, val_impto_serv)
+
+                # Confirmar las inserciones
+                db.connection.commit()
+
+            else:
+                # productos
+                index=0
+                for key, producto in vars.items():
+                    if index < len(ID_imp_pdt):
+                        ID_pdt = ID_imp_pdt[index]
+                        index+=1
+                        val_pdt = (producto["descripcion"].get(), producto["precio"].get(), producto["cantidad"].get(), ID_pdt)
+                        sql_pdt = """
+                            UPDATE productos
+                            SET descripción_pdt = %s, precio_pdt = %s, cantidad_pdt = %s
+                            WHERE ID_pdt = %s
+                        """
+                        db.cursor.execute(sql_pdt, val_pdt)
+
+                    else:
+                        VentanaMensaje(app, "Error de Edición", "No puedes agregar mas productos a una factura ya emitida, por favor borra los campos extra que agregaste")
+
+                        # # Insertar producto
+                        # val_pdt= producto["descripcion"].get(), producto["precio"].get(), producto["cantidad"].get()
+                        
+                        # sql_pdt="""
+                        #     INSERT INTO productos (descripción_pdt, precio_pdt, cantidad_pdt)
+                        #     VALUES (%s, %s, %s)
+                        # """
+                        # db.cursor.execute(sql_pdt, val_pdt)
+                        
+                        # # Obtener el ID del servicio o impuesto recién insertado
+                        # ID_pdt = db.cursor.lastrowid
+                        
+                        # # Insertar detalles de la factura
+                        # db.cursor.execute("""
+                        #     INSERT INTO articulos_por_factura (ID_fact, ID_pdt)
+                        #     VALUES (%s, %s)
+                        # """, (ID_fact, ID_pdt))
+
+                # Confirmar las inserciones
+                db.connection.commit()
+
+            VentanaMensaje(app, "Confirmación de Edición", "¡Éxito! Tu factura ha sido editada correctamente.")
+
+
+    except Exception as err:
+        VentanaMensaje(app, "Error", "Lo sentimos, Ocurrió un error. ¡Inténtalo más tarde!")
+        print(err)
+
+        # sql="UPDATE productos SET pdt_descripcion =%s, pdt_precio=%s WHERE ID_pdt = "+id
         
-        # si no se cumple se agrga el registro
-        id= tabla.selection()[0]
-        val= descripcion_pdt.get(), precio_pdt.get()
-        sql="UPDATE productos SET pdt_descripcion =%s, pdt_precio=%s WHERE ID_pdt = "+id
-        db.cursor.execute(sql, val)
-        db.connection.commit()
-        # messaje(marco, "se ha actualizado el registro correctamente", "green")
-        get_factures(tabla)
-        clear(descripcion_pdt, precio_pdt)
 
-def delete(marco, tabla):
-    print(tabla.selection())
+def delete(app, ID_fact, tipo):
+    try:
+        if tipo in  ["Servicios Públicos", "Impuestos"]:
+            # Eliminar los servicios o impuestos relacionados con la factura en la tabla detalles_factura
+            sql_eliminar_servicios_impuestos = "DELETE FROM detalles_factura WHERE ID_fact = %s"
+            val_eliminar_servicios_impuestos = (ID_fact,)
+            db.cursor.execute(sql_eliminar_servicios_impuestos, val_eliminar_servicios_impuestos)
 
-    if tabla.selection():
-        id= tabla.selection()[0]
-        sql="DELETE FROM productos WHERE ID_pdt=%s"
-        db.cursor.execute(sql, (id,))
-        db.connection.commit()
-        tabla.delete(id)
-        # messaje(marco, "se ha eliminado el registro correctamente", "green")
-    # else:
-    #     messaje(marco, "selecciona un registro para eliminar", "red")
+            # Eliminar todos los servicios o impuestos que no están asociados con ninguna factura
+            sql_eliminar_servicios_impuestos_no_asociados = """
+            DELETE FROM servicios_e_impuestos
+            WHERE ID_serv_impto NOT IN (SELECT ID_serv_impto FROM detalles_factura);
+            """
+            db.cursor.execute(sql_eliminar_servicios_impuestos_no_asociados)
+
+        else:
+            # Eliminar los artículos relacionados con la factura en la tabla articulos_por_factura
+            sql_eliminar_articulos = "DELETE FROM articulos_por_factura WHERE ID_fact = %s"
+            val_eliminar_articulos = (ID_fact,)
+            db.cursor.execute(sql_eliminar_articulos, val_eliminar_articulos)
+
+            # -- Eliminar todos los productos que no están asociados con ninguna factura
+            sql_eliminar_productos = """DELETE FROM productos
+                                WHERE ID_pdt NOT IN (SELECT ID_pdt FROM articulos_por_factura);"""
+
+            db.cursor.execute(sql_eliminar_productos)
+
+        # Primero, obtén el ID del cliente asociado a la factura
+        sql_obtener_id_cliente = "SELECT ID_cli_pvd FROM facturas WHERE ID_fact = %s"
+        val_factura = (ID_fact,)
+        db.cursor.execute(sql_obtener_id_cliente, val_factura)
+        ID_cli_pvd_a_eliminar = db.cursor.fetchone()[0]
+
+            # Eliminar la factura de la tabla facturas
+        sql_eliminar_factura = "DELETE FROM facturas WHERE ID_fact = %s"
+        val_eliminar_factura = (ID_fact,)
+        db.cursor.execute(sql_eliminar_factura, val_eliminar_factura)
+
+
+        # Y finalmente, elimina el cliente usando el ID obtenido previamente
+        sql_eliminar_cliente = "DELETE FROM clientes_proveedores WHERE ID_cli_pvd = %s"
+        val_cliente = (ID_cli_pvd_a_eliminar,)
+        db.cursor.execute(sql_eliminar_cliente, val_cliente)
+
+        VentanaMensaje(app, "Eliminación", "Tu factura ha sido eliminada correctamente.")
+
+    except Exception as err:
+        VentanaMensaje(app, "Error", "Error al buscar la factura. Por favor, verifica que la factura exista, recarga la sección de facturas para verificar")
+        print(err)
+
+
+    # No olvides hacer commit para aplicar los cambios en la base de datos
+    db.connection.commit()

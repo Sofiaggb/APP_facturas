@@ -1,12 +1,16 @@
 # rmdir /s /q C:\xampp\htdocs\MIS_PROYECTOS\SISTEMA_FACTURACION\SistemaFacturacion
 # python -3.12 -m venv SistemaFacturacion
-#  $env:PYTHONPATH = "C:\xampp\htdocs\MIS_PROYECTOS\SISTEMA_FACTURACION"
+#  $
 
 import customtkinter as ctk
 import os
 from PIL import Image, ImageDraw
-from views.show_facts import show_facts
+from views.facturas import Facturas
+from views.buscador import Buscador
 from views.form_fact import form
+
+ctk.set_appearance_mode("dark")  # Modes: system (default), light, dark
+ctk.set_default_color_theme("blue")  # Themes: blue (default), dark-blue, green
 
 class AplicacionPantallaCompleta:
     def __init__(self):
@@ -14,8 +18,6 @@ class AplicacionPantallaCompleta:
         self.app.title("Almacenamiento de Facturas")
         self.app.geometry("1350x700+0+0")
 
-        def open_form():
-            form(self.app)
 
         # Crear un frame para el menú lateral
         side_menu = ctk.CTkFrame(master=self.app, corner_radius=0)
@@ -48,23 +50,54 @@ class AplicacionPantallaCompleta:
         button0.pack(pady=(10,0), padx=0)
 
         button1 = ctk.CTkButton(master=side_menu, text="Agregar",corner_radius=0, width=300, height=50, font=("Arial", 16), fg_color="#323232",
-                                command=lambda: open_form())
+                                command=lambda: self.open_form(self.app))
         button1.pack(pady=(70,0), padx=0)
 
-        button2 = ctk.CTkButton(master=side_menu, text="Buscador",corner_radius=0, width=300, height=50, font=("Arial", 16), fg_color="#323232")
+        button2 = ctk.CTkButton(master=side_menu, text="Facturas",corner_radius=0, width=300, height=50, font=("Arial", 16), fg_color="#323232",
+                                command=self.mostrar_facturas)
         button2.pack(pady=0, padx=0)
-
-
-        button3 = ctk.CTkButton(master=side_menu, text="Papelera",corner_radius=0, width=300, height=50, font=("Arial", 16), fg_color="#323232")
+        
+        button3 = ctk.CTkButton(master=side_menu, text="Buscador",corner_radius=0, width=300, height=50, font=("Arial", 16), fg_color="#323232",
+                                command=self.mostrar_buscador)
         button3.pack(pady=0, padx=0)
 
-        
-        button4 = ctk.CTkButton(master=side_menu, text="Información General",corner_radius=0, width=300, height=50, font=("Arial", 14), fg_color="#323232")
-        button4.pack(side='bottom', fill='x', pady=(10, 0), padx=0)
 
-        show_facts(self.app)
+        button4 = ctk.CTkButton(master=side_menu, text="Papelera",corner_radius=0, width=300, height=50, font=("Arial", 16), fg_color="#323232")
+        button4.pack(pady=0, padx=0)
+
+        
+        button5 = ctk.CTkButton(master=side_menu, text="Información General",corner_radius=0, width=300, height=50, font=("Arial", 14), fg_color="#323232")
+        button5.pack(side='bottom', fill='x', pady=(10, 0), padx=0)
+
+        self.facturas_section = Facturas(self.app)
+
+        self.current_section = self.facturas_section
 
         self.app.mainloop()
+    
+    def open_form(self, app):
+        form(app)
+        
+    def mostrar_facturas(self):
+        if self.current_section:
+            self.current_section.hide()
+        self.facturas_section.actualizar_interfaz()
+        self.facturas_section.show()
+        self.current_section = self.facturas_section
+    
+    def mostrar_buscador(self):
+        
+        self.buscador_section = Buscador(self.app)
+        if self.current_section:
+            self.current_section.hide()
+        self.buscador_section.show()
+        self.current_section = self.buscador_section
+
+
+
+
+
+
 
 AplicacionPantallaCompleta()
 

@@ -2,12 +2,11 @@ import customtkinter as ctk
 import os
 from PIL import Image
 
-from .form_fact import form
 
-class show_facts:
+
+class vacio:
     def __init__(self, app):
-        def open_form():
-            form(app)
+
         # Crear el CTkScrollableFrame
         self.scroll_frame =  ctk.CTkScrollableFrame(app)
         self.scroll_frame.pack(side="right", fill="both", expand=True)
@@ -41,6 +40,17 @@ class show_facts:
         button1 = ctk.CTkButton(master=self.scroll_frame, text="Agregar",
                                 corner_radius=10, width=200, height=50, 
                                 font=("Arial", 16), fg_color="#4824B7",
-                                command=lambda: open_form())
+                                command=lambda: self.open_form(app))
         button1.pack(pady=0, padx=0)
+
+    def open_form(self, app):
+        from .form_fact import form
+
+        form(app)
+
+    def show(self):
+        self.scroll_frame.pack(fill="both", expand=True)
+
+    def hide(self):
+        self.scroll_frame.pack_forget()
         

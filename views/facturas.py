@@ -1,6 +1,6 @@
 import customtkinter as ctk
-from views.esta_vacio import vacio
-from controllers.facturas_controller import get_facturas
+from views.esta_vacio import vacio, papelera_vacia
+from controllers.facturas_controller import get_facturas, get_papelera_facts, busqueda
 from views.factura import factura
 
 class Tarjeta(ctk.CTkFrame):
@@ -23,7 +23,7 @@ class Tarjeta(ctk.CTkFrame):
         self.tipo_label = ctk.CTkLabel(self.inner_frame, text=f"Tipo: {tipo}", font=("Arial", 14), wraplength=max_width, anchor="w")
         self.tipo_label.pack(pady=(0, 5), padx=5, fill="both")
 
-        self.descripcion_label = ctk.CTkLabel(self.inner_frame, text=descripcion, font=("Arial", 12), wraplength=max_width, anchor="w")
+        self.descripcion_label = ctk.CTkLabel(self.inner_frame, text=f"Motivo: {descripcion}", font=("Arial", 12), wraplength=max_width, anchor="w")
         self.descripcion_label.pack(pady=5, padx=5, fill="both")
 
         self.fecha_emision_label = ctk.CTkLabel(self.inner_frame, text=f"Fecha de Emisión: {fecha_emision}", font=("Arial", 12), wraplength=max_width, anchor="w")
@@ -40,14 +40,26 @@ class Tarjeta(ctk.CTkFrame):
             self.command(self.id, self.tipo)
 
 class Facturas:
-    def __init__(self, app):
+    def __init__(self, app, data_user, is_papelera=False,is_buscador=False, val_buscador=None):
         self.app=app
-        self.tarjetas_data = get_facturas(self.app)
-        # self.tarjetas_data = {}
-        if not self.tarjetas_data:
-            self.frame_vacio =vacio(self.app)
+        self.data_user= data_user
+        self.is_papelera=is_papelera
+        self.is_buscador=is_buscador
+        self.val_buscador=val_buscador
+
+        if self.is_papelera:
+            self.tarjetas_data = get_papelera_facts(self.app)
+
+        elif self.is_buscador:
+            self.tarjetas_data = busqueda(self.app, self.val_buscador)
+
         else:
-            self.actualizar_interfaz()
+            self.tarjetas_data = get_facturas(self.app)
+                # self.tarjetas_data = {}
+            if not self.tarjetas_data:
+                self.frame_vacio =vacio(self.app)
+            else:
+                self.actualizar_interfaz()
             # self.scroll_frame_facturas = ctk.CTkScrollableFrame(self.app)
             # self.scroll_frame_facturas.pack(side="right", fill="both", expand=True)
 
@@ -82,7 +94,7 @@ class Facturas:
             self.scroll_frame_facturas.pack_forget()
 
     def on_tarjeta_click(self, id, tipo):
-         factura(self.app, id, tipo, self)
+         factura(self.app, id, tipo, self, self.data_user, self.is_papelera)
     
     def actualizar_interfaz(self):
         # Destruir el scroll_frame actual si existe
@@ -90,22 +102,33 @@ class Facturas:
             self.scroll_frame_facturas.destroy()
 
         # Obtener los datos actualizados de las facturas
-        self.tarjetas_data = get_facturas(self.app)
+        if self.is_papelera:
+            self.tarjetas_data = get_papelera_facts(self.app)
+            # self.tarjetas_data = {}
+            if not self.tarjetas_data:
+                self.frame_vacio =papelera_vacia(self.app)
+            else:
+                # Crear un nuevo scroll_frame y poblarlo con las tarjetas actualizadas
+                self.scroll_frame_facturas = ctk.CTkScrollableFrame(self.app)
+                self.scroll_frame_facturas.pack(side="right", fill="both", expand=True)
+                self.create_tarjetas()
 
-        # Crear un nuevo scroll_frame y poblarlo con las tarjetas actualizadas
-        self.scroll_frame_facturas = ctk.CTkScrollableFrame(self.app)
-        self.scroll_frame_facturas.pack(side="right", fill="both", expand=True)
-        self.create_tarjetas()
-
-    # def actualizar_interfaz_con_retraso(self):
-    #     self.app.after(500, self.actualizar_interfaz) 
-    # def on_factura_creada(self, event):
-    #     self.actualizar_interfaz()
-
-# if __name__ == "__main__":
-#     app = ctk.CTk()
-#     app.geometry("800x600")
-
-#     facturas_app = Facturas(app)
-
-#     app.mainloop()
+        elif self.is_buscador:
+            self.tarjetas_data = busqueda(self.app, self.val_buscador)
+            if not self.tarjetas_data:
+                self.frame_vacio =papelera_vacia(self.app, is_buscador=True)
+            else:
+                # # Crear un nuevo scroll_frame y poblarlo con las tarjetas actualizadas
+                self.scroll_frame_facturas = ctk.CTkScrollableFrame(self.app,  fg_color="transparent",  bg_color="transparent")
+                self.scroll_frame_facturas.pack(side="bottom", fill="both", expand=True, padx=10, pady=10)
+                self.create_tarjetas()
+            
+        else:
+            self.tarjetas_data = get_facturas(self.app)
+            if not self.tarjetas_data:
+                self.frame_vacio =vacio(self.app)
+            else:
+                # Crear un nuevo scroll_frame y poblarlo con las tarjetas actualizadas
+                self.scroll_frame_facturas = ctk.CTkScrollableFrame(self.app)
+                self.scroll_frame_facturas.pack(side="right", fill="both", expand=True)
+                self.create_tarjetas()

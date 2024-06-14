@@ -10,9 +10,12 @@ from controllers.facturas_controller import create, update
 
 
 class form(ctk.CTkToplevel):
-    def __init__(self, parent, factura_info=None):
+    def __init__(self, parent, facturas_section, factura_info=None, ventana_fact=None, parent_fact=None):
         super().__init__(parent)
         self.app = self
+        self.parent_fact = parent_fact  # Guarda una referencia a la ventana principal
+        self.facturas_section = facturas_section
+        self.ventana_fact = ventana_fact
         # self.app.attributes('-topmost' , True)
         self.app.title("Crear Factura")
         self.app.geometry("1030x700+150+0") #tamaño de la ventana
@@ -111,11 +114,11 @@ class form(ctk.CTkToplevel):
         self.date_entry = DateEntry(master= self.invoice, width=20,date_pattern='dd/MM/yyyy',style='my.DateEntry', selected_fg='darkblue')
         self.date_entry.grid(row=4, column=0, padx=(20, 10), pady=(0, 20))
 
-        self.lab_direccion=ctk.CTkLabel(master= self.invoice, text="Descripcion o Motivo")
+        self.lab_direccion=ctk.CTkLabel(master= self.invoice, text="Motivo")
         self.lab_direccion.grid(row=5, column=0, padx=30, sticky="w")
         self.inp_direccion_fact= ctk.CTkTextbox(master= self.invoice, height=80, width=430)
         self.inp_direccion_fact.grid(row=6, column=0, padx=30, pady=(0, 20), sticky="w", columnspan=2)
-        
+        self.inp_direccion_fact.insert("1.0", "Ejemplo: Compra de material para la empresa yyyy")
 
 
 
@@ -165,14 +168,27 @@ class form(ctk.CTkToplevel):
                                             self.telf_cli_pvd, self.date_entry, self.nro_fact, 
                                             self.tipo_fact,  self.iva_fact, self.inp_direccion_fact,
                                             self.vars, self.contain_widgets, 
-                                            self.monto_neto, self.monto_total
+                                            self.monto_neto, self.monto_total, self.facturas_section
                                             ))
         self.handlebutton.grid(row=2, column=0, padx=10, pady=10,  columnspan=2)
         self.grab_set()
+                # Bind the close event to a custom method
+        # self.app.protocol("WM_DELETE_WINDOW", self.on_close)
+
+    def on_close(self):
+        # se detruye la ventana
+        self.app.destroy()
+        # Se ejecuta este código cuando se cierra la ventana
+        if self.facturas_section:
+            self.facturas_section.hide()
+
+        # Recargar la pantalla principal 
+        self.facturas_section.actualizar_interfaz()
+
        
     def save_factura(self, app, nom_cli_pvd, rif_cli_pvd, inp_direccion_cli, telf_cli_pvd,
                       date_entry, nro_fact, tipo_fact, iva_fact, inp_direccion_fact, 
-                      vars, contain_widgets, monto_neto, monto_total):
+                      vars, contain_widgets, monto_neto, monto_total, facturas_section):
         # Verificar si es una nueva factura o una edición
         if self.factura_info:
             if self.factura_info["tipo_fact"] in ["Servicios Públicos", "Impuestos"]:
@@ -180,11 +196,16 @@ class form(ctk.CTkToplevel):
             else:
                 id_imp_pdt=self.ids_pdts
             # Actualizar factura existente
-            # print(id_imp_pdt)
-            update( app, self.factura_info["ID"], self.factura_info["id_cp"], id_imp_pdt, nom_cli_pvd, rif_cli_pvd, inp_direccion_cli, telf_cli_pvd, date_entry, nro_fact, tipo_fact, iva_fact, inp_direccion_fact, vars, contain_widgets, monto_neto, monto_total)
+            update( app, self.factura_info["ID"], self.factura_info["id_cp"], id_imp_pdt, 
+                   nom_cli_pvd, rif_cli_pvd, inp_direccion_cli, telf_cli_pvd, date_entry,
+                     nro_fact, tipo_fact, iva_fact, inp_direccion_fact, vars,
+                       contain_widgets, monto_neto, monto_total, facturas_section,
+                        self.ventana_fact, self.app, self.parent_fact)
         else:
             # Crear nueva factura
-            create( app,nom_cli_pvd, rif_cli_pvd, inp_direccion_cli, telf_cli_pvd, date_entry, nro_fact, tipo_fact, iva_fact, inp_direccion_fact, vars, contain_widgets, monto_neto, monto_total)
+            create( app,nom_cli_pvd, rif_cli_pvd, inp_direccion_cli, telf_cli_pvd, 
+                   date_entry, nro_fact, tipo_fact, iva_fact, inp_direccion_fact, vars,
+                     contain_widgets, monto_neto, monto_total, facturas_section)
 
         # seccion producto
     def frame_products(self, *args):
@@ -420,8 +441,9 @@ class form(ctk.CTkToplevel):
         self.selection_tipo_fact(self.tipo_fact.get())
         self.rif_cli_pvd.set(self.factura_info["cliente"]["rif"])
         self.nom_cli_pvd.set(self.factura_info["cliente"]["nombre"])
-        self.telf_cli_pvd.set(self.factura_info["cliente"]["teléfono"])
+        self.telf_cli_pvd.set(self.factura_info["cliente"]["telefono"])
         self.inp_direccion_cli.insert("1.0", self.factura_info["cliente"]["dirección"])
+        self.inp_direccion_fact.delete("0.0", "end")  
         self.inp_direccion_fact.insert("1.0", self.factura_info["descripción_fact"])
         self.date_entry.set_date(self.factura_info["fecha_emision_fact"])
         self.iva_fact.set(self.factura_info["IVA"])

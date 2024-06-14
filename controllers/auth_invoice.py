@@ -9,7 +9,7 @@ def validar_rif(rif):
 def validar_telefono(numero):
     # El formato de un número de teléfono es 0 seguido de 3 dígitos para el código de área y 7 dígitos del número
     patron = r'^0[0-9]{3}[0-9]{7}$'
-    return re.match(patron, numero) is not None
+    return re.match(patron, numero) is not None or numero == ""
 
 def validar_fecha(fecha):
     fecha_actual = datetime.now().date()
@@ -51,8 +51,8 @@ def valilidar_formulario(app, nombre_cli_pvd, rif_cli_pvd, direccion_cli_pvd, te
         if not nombre_cli_pvd.get().strip():
            return VentanaMensaje(app, "Error", "El nombre del cliente/proveedor es obligatorio.")
         
-        if not telefono_cli_pvd.get().strip():
-           return VentanaMensaje(app, "Error", "El teléfono del cliente/proveedor es obligatorio.")
+        # if not telefono_cli_pvd.get().strip():
+        #    return VentanaMensaje(app, "Error", "El teléfono del cliente/proveedor es obligatorio.")
 
         if not validar_telefono(telefono_cli_pvd.get()):
             return VentanaMensaje(app, "Error", "El teléfono del cliente/proveedor es inválido.")

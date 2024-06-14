@@ -32,17 +32,17 @@ class VentanaMensaje(ctk.CTkToplevel):
 
 
 class ConfirmacionEliminar(ctk.CTkToplevel):
-    def __init__(self, parent, callback):
+    def __init__(self, parent, callback, mensaje):
         super().__init__(parent)
         self.callback = callback
         self.title("Confirmación")
-        self.geometry("300x150+200+200")
+        self.geometry("330x150+200+200")
         # Centrar la ventana de confirmación respecto a la ventana padre
         self.center_window(parent)
         self.protocol("WM_DELETE_WINDOW", self.on_no)
 
         # Mensaje de confirmación
-        self.label = ctk.CTkLabel(self, text="¿Estás seguro de querer eliminar la factura?")
+        self.label = ctk.CTkLabel(self, text=mensaje,  wraplength=280)
         self.label.pack(pady=20)
 
         # Botones Sí y No
@@ -70,3 +70,18 @@ class ConfirmacionEliminar(ctk.CTkToplevel):
         x = parent.winfo_x() + (parent.winfo_width() // 2) - (self.winfo_width() // 2)
         y = parent.winfo_y() + (parent.winfo_height() // 2) - (self.winfo_height() // 2)
         self.geometry(f"+{x}+{y}")
+
+
+class LoadingPopup(ctk.CTkToplevel):
+    def __init__(self, parent):
+        super().__init__(parent)
+        
+        self.title("Generando PDF")
+        self.geometry("300x100")
+        
+        self.label = ctk.CTkLabel(self, text="Se está generando el PDF. Por favor, espere...")
+        self.label.pack(pady=10)
+        
+        self.progress_bar = ctk.CTkProgressBar(self)
+        self.progress_bar.pack(pady=10)
+        self.progress_bar.set(0.0)

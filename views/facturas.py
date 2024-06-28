@@ -55,7 +55,7 @@ class Facturas:
 
         else:
             self.tarjetas_data = get_facturas(self.app)
-                # self.tarjetas_data = {}
+            # self.tarjetas_data = {}
             if not self.tarjetas_data:
                 self.frame_vacio =vacio(self.app)
             else:

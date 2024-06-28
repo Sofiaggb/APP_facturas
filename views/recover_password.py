@@ -6,11 +6,11 @@ class password(ctk.CTkToplevel):
         super().__init__(parent)
         self.parent = parent  # Guarda una referencia a la ventana principal
         # self.app = self
-        self.title("Factura")
-        self.geometry("400x300") #tamaño de la ventana
+        self.title("Contraseña")
+        self.geometry("400x350") #tamaño de la ventana
         self.center_window(parent)
         self.resizable(False, False)
-        self.scroll = ctk.CTkScrollableFrame(master=self, width=400, height=300,  fg_color="transparent",  bg_color="transparent")
+        self.scroll = ctk.CTkScrollableFrame(master=self, width=400, height=350,  fg_color="transparent",  bg_color="transparent")
         self.scroll.pack()
 
         # variables

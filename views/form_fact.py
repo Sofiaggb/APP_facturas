@@ -118,7 +118,7 @@ class form(ctk.CTkToplevel):
         self.lab_direccion.grid(row=5, column=0, padx=30, sticky="w")
         self.inp_direccion_fact= ctk.CTkTextbox(master= self.invoice, height=80, width=430)
         self.inp_direccion_fact.grid(row=6, column=0, padx=30, pady=(0, 20), sticky="w", columnspan=2)
-        self.inp_direccion_fact.insert("1.0", "Ejemplo: Compra de material para la empresa yyyy")
+        # self.inp_direccion_fact.insert("1.0", "Ejemplo: Compra de material para la empresa yyyy")
 
 
 
@@ -418,6 +418,10 @@ class form(ctk.CTkToplevel):
                         widget.destroy()
                     del self.contain_widgets[num]
                     del self.vars[num]
+                
+            self.descripcion_pdt.set("")
+            self.precio_pdt.set("")
+            self.cant_pdt.set("")
 
             # Restablecer el contador a 1
             # self.num = 1
@@ -430,9 +434,23 @@ class form(ctk.CTkToplevel):
             self.lab_precio_pdt.configure(text="Precio c/u")
             self.lab_cant_pdt.configure(text="Cantidad")
             self.add_button.configure(state=ctk.NORMAL, fg_color="#0277BD")
+     
             # habilitar el campo de entrada
             self.inp_iva.configure(state=ctk.NORMAL)
             self.iva_fact.set('')
+
+               # Borrar las filas excepto la primera
+            for num in list(self.contain_widgets.keys()):
+                if num != 1:  # No borrar la primera fila
+                    for widget in self.contain_widgets[num].values():
+                        widget.destroy()
+                    del self.contain_widgets[num]
+                    del self.vars[num]
+                
+            self.descripcion_pdt.set("")
+            self.precio_pdt.set("")
+            self.cant_pdt.set("")
+
 
     def load_factura_info(self):
         # Cargar la información de la factura en los campos del formulario

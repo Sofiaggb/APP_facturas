@@ -147,7 +147,7 @@ class session:
         self.user.set("")
         self.contraseña.set("")
 
-                 # Frame para los widgets de registro
+        # Frame para los widgets de registro
         self.frame_registro = ctk.CTkScrollableFrame(self.app, width=400, height=350, fg_color="transparent",  bg_color="transparent" )
         self.frame_registro.pack( pady=(0,10))
 

@@ -3,7 +3,6 @@
 ## Tablas
 **Usuarios (ED)**
 - ID_user **(PK)**
-- ID fact **(FK)**
 - nombre_user
 - contraseña_user
 
@@ -14,14 +13,15 @@
 - id_cliente_proveedor **(FK)**
 - tipo
 - descripcion 
-- monto
-- imagen
+- monto neto
+- iva
+- monto total
 
 **Articulos_por_factura (EP)**
 - id_articulo **(PK)**
 - id_fact **(FK)**
 - id_producto **(FK)**
-- cantidad
+
 
 **Clientes_Provedores (ED)**
 - id_cliente_proveedor **(PK)**
@@ -34,11 +34,17 @@
 - id_producto **(PK)**
 - descripcion
 - precio
+- cantidad
+
+**Detalles_factura (EP)**
+- id_detalles **(PK)**
+- id_fact **(FK)**
+- id_serv_impto **(FK)**
 
 **Servicios_e_impuestos (ED)**
 - ID_serv_impto **(PK)**
 - nombre
-- precio
+- monto
 
 
 
@@ -54,9 +60,6 @@
 - **EP** entidad Pivote
 - **PK** llave primaria
 - **FK** llave foranea
-
-## Modelo Entidad-Relación
-![Modelo Entidad - Reación](./diagrama_E-R.png)
 
 ## Modelo Relacional de la BD
 ![Modelo Relacional](./Diagrama_relacional.png) 
@@ -92,3 +95,77 @@
 1. Leer un artículo en particular.
 1. Actualizar un artículo.
 1. Eliminar un artículo.
+
+
+## Generar la BD 
+-- Crear BD
+CREATE DATABASE caromack
+
+-- Crear tablas
+
+CREATE TABLE clientes_proveedores (
+  ID_cli_pvd INT AUTO_INCREMENT PRIMARY KEY,
+  nombre_cli_pvd VARCHAR(100) NOT NULL,
+  rif_cli_pvd VARCHAR(15) NOT NULL,
+  dirección_cli_pvd VARCHAR(100) NOT NULL,
+  telefono_cli_pvd VARCHAR (11)
+);
+
+CREATE TABLE productos (
+  ID_pdt INT AUTO_INCREMENT PRIMARY KEY,
+  descripción_pdt VARCHAR(100) NOT NULL,
+  precio_pdt DECIMAL(10,2) NOT NULL,
+  cantidad_pdt INT  NOT NULL
+);
+
+CREATE TABLE servicios_e_impuestos (
+  ID_serv_impto INT AUTO_INCREMENT PRIMARY KEY,
+  descripcion_serv_impto VARCHAR(100) NOT NULL,
+  monto_serv_impto DECIMAL(10,2)  NOT NULL
+);
+
+CREATE TABLE facturas (
+    ID_fact INT AUTO_INCREMENT PRIMARY KEY,
+    fecha_emision_fact DATE NOT NULL,
+    nro_fact VARCHAR(20) NOT NULL,
+    ID_cli_pvd INT NOT NULL,
+    tipo_fact VARCHAR(15) NOT NULL,
+    descripción_fact VARCHAR(100) NOT NULL,
+    monto_neto INT NOT NULL,
+    IVA INT NOT NULL,
+    monto_total INT NOT NULL,
+    is_deleted BOOLEAN NOT NULL,
+    FOREIGN KEY (ID_cli_pvd) REFERENCES clientes_proveedores(ID_cli_pvd)
+);
+
+CREATE TABLE articulos_por_factura (
+    ID_articulo INT AUTO_INCREMENT PRIMARY KEY,
+    ID_fact INT NOT NULL,
+    ID_pdt INT NOT NULL,
+    FOREIGN KEY (ID_fact) REFERENCES facturas(ID_fact),
+    FOREIGN KEY (ID_pdt) REFERENCES productos(ID_pdt)
+);
+
+CREATE TABLE detalles_factura (
+    ID_detalles INT AUTO_INCREMENT PRIMARY KEY,
+    ID_fact INT NOT NULL,
+    ID_serv_impto INT NOT NULL,
+    FOREIGN KEY (ID_fact) REFERENCES facturas(ID_fact),
+    FOREIGN KEY (ID_serv_impto) REFERENCES servicios_e_impuestos(ID_serv_impto)
+);
+--     ID_fact INT NOT NULL,
+CREATE TABLE Usuarios (
+    id_usuario INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_usuario VARCHAR(10) NOT NULL UNIQUE,
+    contraseña_usuario VARCHAR(50) NOT NULL,
+    pregunta1 VARCHAR(50) NOT NULL,
+    pregunta2 VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE Sesiones (
+    ID_sesion INT AUTO_INCREMENT PRIMARY KEY,
+    ID_usuario INT NOT NULL,
+    fecha_acceso DATETIME NOT NULL,
+    fecha_salida DATETIME NOT NULL,
+    FOREIGN KEY (ID_usuario) REFERENCES Usuarios(id_usuario)
+);

@@ -2,13 +2,11 @@ import customtkinter as ctk
 from tkinter import StringVar
 from controllers.users_controller import crear_user, login
 # from main import AplicacionPantallaCompleta
-
+# pyinstaller --noconsole --onefile --icon=logo_app.ico --name="Gestion Facturas" session.py
 
 class session:
     def __init__(self):
         self.app = ctk.CTk()
-        # self.app =InterceptAfterApp()
-        # self.after_ids = []  # Lista para almacenar las IDs de las funciones after
           # Obtener las dimensiones de la pantalla
         ancho_pantalla = self.app.winfo_screenwidth()
         alto_pantalla = self.app.winfo_screenheight()
@@ -205,9 +203,11 @@ class session:
                                                  command=self.mostrar_inicio_sesion)
         self.boton_volver_inicio.pack(side="left", anchor="s", padx=(0,20), pady=10)
 
-# def api():
-    # from main import AplicacionPantallaCompleta
 
-    # AplicacionPantallaCompleta("holi")
 if __name__ == "__main__":
-    session()
+    try:
+        session()
+
+
+    except Exception as err:
+        print("error en sesison", err)

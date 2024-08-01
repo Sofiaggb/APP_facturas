@@ -5,7 +5,7 @@ from .auth_user import validar_contraseña
 
 db = connection_bd()
 
-def crear_user(app, user, contraseña, reentre_contraseña, pregunta1, pregunta2):
+def crear_user(app, user, contraseña, reentre_contraseña, pregunta1, pregunta2, nivel):
     try:
         if not user.get().strip():
            return VentanaMensaje(app, "Error", "El nombre de usuario es obligatorio.")
@@ -27,11 +27,23 @@ def crear_user(app, user, contraseña, reentre_contraseña, pregunta1, pregunta2
                 VentanaMensaje(app, "Error", "El nombre de usuario ya está en uso. Por favor, elige otro.")
                 return False
             
+            # Verifica si ya existe un usuario con el nivel "Admin"
+            nivel_usuario = nivel.get()  # Obtener el nivel de usuario
+
+            sql_verificacion = "SELECT COUNT(*) FROM Usuarios WHERE nivel_usuario = %s"
+            db.cursor.execute(sql_verificacion, (nivel_usuario,))
+            resultado = db.cursor.fetchone()
+
+            if nivel_usuario == "Admin" and resultado[0] > 0:
+                VentanaMensaje(app, "Error", "El nivel de usuario 'Admin' ya está en uso. Por favor, elige otro.")
+                return False
+            
             # Insertar usuario y contraseña
-            val= user.get(), contraseña.get(), pregunta1.get(), pregunta2.get()
+            val= user.get(), contraseña.get(), pregunta1.get(), pregunta2.get(), nivel.get()
             sql="""
-                    INSERT INTO Usuarios (nombre_usuario, contraseña_usuario, pregunta1, pregunta2)
-                    VALUES (%s, %s, %s, %s)
+                    INSERT INTO Usuarios (nombre_usuario, contraseña_usuario,
+                                         pregunta1, pregunta2, nivel_usuario)
+                    VALUES (%s, %s, %s, %s, %s)
                 """
             db.cursor.execute(sql, val)
             db.connection.commit()
@@ -56,7 +68,7 @@ def login(app, user, contraseña):
                 return None
         
         # Verificar si el nombre de usuario y la contraseña coinciden
-        sql_verificacion = """SELECT id_usuario, nombre_usuario
+        sql_verificacion = """SELECT id_usuario, nombre_usuario, nivel_usuario
                          FROM Usuarios 
                         WHERE nombre_usuario = %s AND contraseña_usuario = %s"""
         db.cursor.execute(sql_verificacion, (user.get(), contraseña.get()))
@@ -64,12 +76,15 @@ def login(app, user, contraseña):
 
         data_user= {
             "ID":None,
-            "user":None
+            "user":None,
+            "nivel":None
         }
 
         if resultado:
             data_user["ID"]= resultado[0]
             data_user["user"]= resultado[1]
+            data_user["nivel"]= resultado[2]
+
 
              # Registrar la nueva sesión
             sql_registro_sesion = """INSERT INTO Sesiones (ID_usuario, fecha_acceso, fecha_salida)
@@ -202,7 +217,7 @@ def get_users(app):
                   # seleccionar los elemtos y devolverlos
         sql=""" SELECT id_usuario, nombre_usuario
                 FROM Usuarios
-                WHERE nombre_usuario <> 'superAdmin';"""
+                WHERE nivel_usuario <> 'Admin';"""
         db.cursor.execute(sql)
         filas= db.cursor.fetchall()
 

@@ -29,7 +29,7 @@ class AplicacionPantallaCompleta(ctk.CTkToplevel):
         side_menu = ctk.CTkFrame(master=self.app, corner_radius=0)
         side_menu.pack(side="left", fill="y")
         # Obtén la ruta del directorio actual (donde se encuentra tu script)
-        self.image_path = os.path.join(os.path.dirname(__file__), "img/logo.jpg")
+        self.image_path = os.path.join(os.path.dirname(__file__), "img/logo_app.png")
         # self.image_path = "C:\xampp\htdocs\MIS_PROYECTOS\SISTEMA_FACTURACION\img\logo.jpg"
         # Abre la imagen original
         self.original_image = Image.open(self.image_path)
@@ -53,13 +53,12 @@ class AplicacionPantallaCompleta(ctk.CTkToplevel):
         # self.imagen = imagen
 
         # Crear los botones 
-        if self.data_user["user"] == "superAdmin" or self.data_user["user"] == "admin":
+        if self.data_user["nivel"] == "Admin":
             button0 = ctk.CTkButton(master=side_menu, text="Movimientos de Usuarios", width=200, 
                                     height=50, font=("Arial", 16), fg_color="#4824B7",
                                     command=self.usuarios)
             button0.pack(pady=(10,0), padx=0)
 
-        if self.data_user["user"] == "superAdmin":
             button6 = ctk.CTkButton(master=side_menu, text="Eliminar Usuarios", width=200, 
                                     height=50, font=("Arial", 16), fg_color="#4824B7",
                                     command=self.administrar_usuarios)
@@ -67,25 +66,24 @@ class AplicacionPantallaCompleta(ctk.CTkToplevel):
            
         button2 = ctk.CTkButton(master=side_menu, text="Facturas 📄",corner_radius=0, width=300, height=50, font=("Arial", 16), fg_color="#323232",
                                     command=self.mostrar_facturas)
+        button2.pack(pady=(70,0), padx=0)
         
-        if self.data_user["user"] == "superAdmin" or self.data_user["user"] == "admin":
-            button1 = ctk.CTkButton(master=side_menu, text="Agregar",corner_radius=0, width=300, height=50, font=("Arial", 16), fg_color="#323232",
+
+        button1 = ctk.CTkButton(master=side_menu, text="Agregar",corner_radius=0, width=300, height=50, font=("Arial", 16), fg_color="#323232",
                                     command=self.open_form)
-            button1.pack(pady=(70,0), padx=0)
+        button1.pack(pady=0, padx=0)
 
-            button2.pack(pady=0, padx=0)
-        else:
 
-            button2.pack(pady=(70,0), padx=0)
         
         button3 = ctk.CTkButton(master=side_menu, text="Buscador 🔍",corner_radius=0, width=300, height=50, font=("Arial", 16), fg_color="#323232",
                                 command=self.mostrar_buscador)
         button3.pack(pady=0, padx=0)
 
+        if self.data_user["nivel"] == "Admin":
+            button4 = ctk.CTkButton(master=side_menu, text="Papelera 🗑️",corner_radius=0, width=300, height=50, font=("Arial", 16), fg_color="#323232",
+                                    command=self.mostrar_papelera)
+            button4.pack(pady=0, padx=0)
 
-        button4 = ctk.CTkButton(master=side_menu, text="Papelera 🗑️",corner_radius=0, width=300, height=50, font=("Arial", 16), fg_color="#323232",
-                                command=self.mostrar_papelera)
-        button4.pack(pady=0, padx=0)
         # Crear un frame para los botones
         buttons_frame = ctk.CTkFrame(master=side_menu)
         buttons_frame.pack(side='bottom', fill='x', pady=0, padx=0)

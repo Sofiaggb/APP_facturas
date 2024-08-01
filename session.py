@@ -19,6 +19,7 @@ class session:
 
         # variables
         self.user=StringVar()
+        self.nivel = StringVar()
         self.contraseña=StringVar()
         self.reenter_contraseña=StringVar()
         self.pregunta1=StringVar()
@@ -96,7 +97,8 @@ class session:
     def registrar_usuario(self):
          # Intentar crear el usuario
         usuario_creado = crear_user(self.app, self.user, self.contraseña, 
-                                    self.reenter_contraseña, self.pregunta1, self.pregunta2)
+                                    self.reenter_contraseña, self.pregunta1, self.pregunta2,
+                                    self.nivel)
         
         if usuario_creado:
             # Si el usuario se creó correctamente, mostrar la ventana de inicio de sesión
@@ -145,6 +147,8 @@ class session:
         self.user.set("")
         self.contraseña.set("")
 
+        niveles = ["Admin", "Usuario"]
+
         # Frame para los widgets de registro
         self.frame_registro = ctk.CTkScrollableFrame(self.app, width=400, height=350, fg_color="transparent",  bg_color="transparent" )
         self.frame_registro.pack( pady=(0,10))
@@ -157,6 +161,12 @@ class session:
         self.label_usuario_registro.pack(anchor="w", padx=80, pady=(10,0))
 
         self.entry_usuario_registro = ctk.CTkEntry(self.frame_registro, textvariable=self.user,width=200, font=("Arial", 14))
+        self.entry_usuario_registro.pack(padx=20, pady=(0,10))
+        
+        self.label_usuario_registro = ctk.CTkLabel(self.frame_registro, text="Nivel de Usuario:", font=("Arial", 14))
+        self.label_usuario_registro.pack(anchor="w", padx=80, pady=(10,0))
+
+        self.entry_usuario_registro = ctk.CTkOptionMenu(self.frame_registro, values= niveles, variable=self.nivel)
         self.entry_usuario_registro.pack(padx=20, pady=(0,10))
 
         self.label_contraseña_registro = ctk.CTkLabel(self.frame_registro, text="Contraseña:", font=("Arial", 14))

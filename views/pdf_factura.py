@@ -53,11 +53,11 @@ def draw_wrapped_text(c, text, x, y, max_width):
 def draw_invoice(c, data):
     # Dibujar encabezado de la empresa
     c.setFont("Helvetica-Bold", 16)
-    c.drawString(50, 750, "Distribuidora Caroamck C.A.")
+    c.drawString(50, 750, "FACTURA")
     c.setFont("Helvetica", 12)
-    c.drawString(50, 735, "Av. 7ma, Torre Sofitasa piso 4, ofic. 4-3")
-    c.drawString(50, 720, "San Cristóbal, Edo. Táchira")
-    c.drawString(50, 705, "Teléfono: 0276-3444581")
+    c.drawString(50, 735, "Avenida, calle, Ciudad")
+    c.drawString(50, 720, "Estado, Pais")
+    c.drawString(50, 705, "Teléfono: 0111-1111111")
 
     # Dibujar detalles de la factura
     c.setFont("Helvetica-Bold", 12)

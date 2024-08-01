@@ -8,7 +8,7 @@ class factura(ctk.CTkToplevel):
         self.parent = parent  # Guarda una referencia a la ventana principal
         self.facturas_section = facturas_section
         self.is_papelera=is_papelera
-        self.data_user= data_user["user"]
+        self.data_user= data_user["nivel"]
         # self.app = self
         self.attributes('-topmost' , True)
         self.title("Factura")
@@ -91,43 +91,32 @@ class factura(ctk.CTkToplevel):
         buttons_frame = ctk.CTkFrame(self.scroll, bg_color="transparent", fg_color="transparent")
         buttons_frame.pack(anchor="center", padx=20, pady=(0,10))
 
-        # if self.data_user == "superAdmin":
         if self.is_papelera:
-            if self.data_user == "superAdmin":
-                delete_button = ctk.CTkButton(buttons_frame, text="Eliminar",  font=("Arial", 16),
+            delete_button = ctk.CTkButton(buttons_frame, text="Eliminar",  font=("Arial", 16),
                                                 command=self.on_delete,
                                                 fg_color="#9B0202", hover_color="#DC0F0F",height=40, width=80)
-                delete_button.pack(side="left", padx=20, pady=10)
-            if self.data_user == "superAdmin" or self.data_user == "admin":
-                edit_button = ctk.CTkButton(buttons_frame, text="Recuperar",  font=("Arial", 16),
+            delete_button.pack(side="left", padx=20, pady=10)
+            edit_button = ctk.CTkButton(buttons_frame, text="Recuperar",  font=("Arial", 16),
                                                 command=self.on_recover,
                                                 fg_color="#9F9011",text_color="#000", hover_color="#DAC40B",height=40, width=90)
-                edit_button.pack(side="left", padx=20, pady=10)
+            edit_button.pack(side="left", padx=20, pady=10)
         else:
-                # buttons_frame.pack(anchor="center", padx=20, pady=(0,10))
-            if self.data_user == "superAdmin" or self.data_user == "admin":
-                delete_button = ctk.CTkButton(buttons_frame, text="Eliminar",  font=("Arial", 16),
+            
+            delete_button = ctk.CTkButton(buttons_frame, text="Eliminar",  font=("Arial", 16),
                                                 command=self.on_papelera,
                                                 fg_color="#9B0202", hover_color="#DC0F0F",height=40, width=80)
-                delete_button.pack(side="left", padx=20, pady=10)
+            delete_button.pack(side="left", padx=20, pady=10)
 
-                edit_button = ctk.CTkButton(buttons_frame, text="Editar",  font=("Arial", 16),
+            edit_button = ctk.CTkButton(buttons_frame, text="Editar",  font=("Arial", 16),
                                                 command=self.on_edit,
                                                 fg_color="#002b5b", hover_color="#0C59E1",height=40, width=80)
-                edit_button.pack(side="left", padx=20, pady=10)
-            
-            # self.pdf_generator = PDFGenerator(factura_info)
+            edit_button.pack(side="left", padx=20, pady=10)
 
-            # self.progress_bar = ctk.CTkProgressBar(buttons_frame)
-            # self.progress_bar.pack(pady=20)
-            # self.progress_bar.set(0.0)
 
             self.button = ctk.CTkButton(buttons_frame, text="Generar PDF", height=40,
                                          font=("Arial", 16), command=self.on_generate_pdf)
             self.button.pack(side="left",pady=20)
 
-    # def on_generate_pdf(self):
-    #     self.pdf_generator.start_pdf_generation(self.progress_bar)
     def on_generate_pdf(self):
         from views.messages import LoadingPopup
                 

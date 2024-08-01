@@ -11,8 +11,8 @@ class Info(ctk.CTkToplevel):
         self.app.resizable(False, False) # bloqueo de redimencion de la ventana, alto y ancho
         self.app.attributes('-topmost' , True)
 
-        texto = ("La Aplicación de Escritorio para la Gestión de Facturas de la "
-                 "Distribuidora Caromack C.A. surge como una solución crucial para "
+        texto = ("La Aplicación de Escritorio para la Gestión de Facturas"
+                 "surge como una solución crucial para "
                  "abordar los desafíos actuales en la gestión documental. Esta "
                  "aplicación automatiza el almacenamiento, organización y recuperación "
                  "de las facturas, mejorando la eficiencia y precisión en la administración "
